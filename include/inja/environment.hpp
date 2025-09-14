@@ -30,8 +30,8 @@ protected:
   ParserConfig parser_config;
   RenderConfig render_config;
 
-  std::filesystem::path input_path;
-  std::filesystem::path output_path;
+  const std::filesystem::path input_path;
+  const std::filesystem::path output_path;
 
 public:
   Environment(): Environment("") {}
