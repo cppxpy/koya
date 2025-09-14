@@ -1,6 +1,8 @@
 .coveralls.yml
 .vscode
 .vs
+.cache
+*~
 
 build
 build-*
