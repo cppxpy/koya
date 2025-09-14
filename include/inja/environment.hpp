@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-#include "json.hpp"
+#include "model.hpp"
 #include "config.hpp"
 #include "function_storage.hpp"
 #include "parser.hpp"
@@ -21,7 +21,8 @@ namespace inja {
 /*!
  * \brief Class for changing the configuration.
  */
-class Environment {
+template <typename RenderT = Renderer, typename MetaT = json_metamodel>
+ class Environment {
   FunctionStorage function_storage;
   TemplateStorage template_storage;
 
@@ -34,6 +35,8 @@ protected:
   const std::filesystem::path output_path;
 
 public:
+  using model_type = typename MetaT::model_type;
+
   Environment(): Environment("") {}
   explicit Environment(const std::filesystem::path& global_path): input_path(global_path), output_path(global_path) {}
   Environment(const std::filesystem::path& input_path, const std::filesystem::path& output_path): input_path(input_path), output_path(output_path) {}
@@ -113,54 +116,54 @@ public:
     return parse_template(filename);
   }
 
-  std::string render(std::string_view input, const json& data) {
-    return render(parse(input), data);
+  std::string render(std::string_view input, const model_type& model) {
+    return render(parse(input), model);
   }
 
-  std::string render(const Template& tmpl, const json& data) {
+  std::string render(const Template& tmpl, const model_type& model) {
     std::stringstream os;
-    render_to(os, tmpl, data);
+    render_to(os, tmpl, model);
     return os.str();
   }
 
-  std::string render_file(const std::filesystem::path& filename, const json& data) {
-    return render(parse_template(filename), data);
+  std::string render_file(const std::filesystem::path& filename, const model_type& model) {
+    return render(parse_template(filename), model);
   }
 
-  std::string render_file_with_json_file(const std::filesystem::path& filename, const std::string& filename_data) {
-    const json data = load_json(filename_data);
-    return render_file(filename, data);
+  std::string render_file_with_model(const std::filesystem::path& filename, const std::string & model_filename) {
+    const model_type model = load_model(model_filename);
+    return render_file(filename, model);
   }
 
-  void write(const std::filesystem::path& filename, const json& data, const std::string& filename_out) {
+  void write(const std::filesystem::path& filename, const model_type& model, const std::string& filename_out) {
     std::ofstream file(output_path / filename_out);
-    file << render_file(filename, data);
+    file << render_file(filename, model);
     file.close();
   }
 
-  void write(const Template& temp, const json& data, const std::string& filename_out) {
+  void write(const Template& temp, const model_type& model, const std::string& filename_out) {
     std::ofstream file(output_path / filename_out);
-    file << render(temp, data);
+    file << render(temp, model);
     file.close();
   }
 
-  void write_with_json_file(const std::filesystem::path& filename, const std::string& filename_data, const std::string& filename_out) {
-    const json data = load_json(filename_data);
-    write(filename, data, filename_out);
+  void write_with_model(const std::filesystem::path& filename, const std::string& model_filename, const std::string& filename_out) {
+    const model_type model = load_model(model_filename);
+    write(filename, model, filename_out);
   }
 
-  void write_with_json_file(const Template& temp, const std::string& filename_data, const std::string& filename_out) {
-    const json data = load_json(filename_data);
-    write(temp, data, filename_out);
+  void write_with_model(const Template& temp, const std::string& model_filename, const std::string& filename_out) {
+    const model_type model = load_model(model_filename);
+    write(temp, model, filename_out);
   }
 
-  std::ostream& render_to(std::ostream& os, const Template& tmpl, const json& data) {
-    Renderer(render_config, template_storage, function_storage).render_to(os, tmpl, data);
+  std::ostream& render_to(std::ostream& os, const Template& tmpl, const model_type& model) {
+    RenderT(render_config, template_storage, function_storage).render_to(os, tmpl, model);
     return os;
   }
 
-  std::ostream& render_to(std::ostream& os, const std::string_view input, const json& data) {
-    return render_to(os, parse(input), data);
+  std::ostream& render_to(std::ostream& os, const std::string_view input, const model_type& model) {
+    return render_to(os, parse(input), model);
   }
 
   std::string load_file(const std::string& filename) {
@@ -168,14 +171,8 @@ public:
     return Parser::load_file(input_path / filename);
   }
 
-  json load_json(const std::string& filename) {
-    std::ifstream file;
-    file.open(input_path / filename);
-    if (file.fail()) {
-      INJA_THROW(FileError("failed accessing file at '" + (input_path / filename).string() + "'"));
-    }
-
-    return json::parse(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+  typename MetaT::model_type load_model(const std::string& filename) {
+    return MetaT::load(input_path / filename);
   }
 
   /*!
@@ -228,16 +225,18 @@ public:
 /*!
 @brief render with default settings to a string
 */
-inline std::string render(std::string_view input, const json& data) {
-  return Environment().render(input, data);
+template <typename RenderT = Renderer, typename MetaT = json_metamodel>
+inline std::string render(std::string_view input, const typename MetaT::model_type& model) {
+  return Environment<RenderT, MetaT>().render(input, model);
 }
 
 /*!
 @brief render with default settings to the given output stream
 */
-inline void render_to(std::ostream& os, std::string_view input, const json& data) {
-  Environment env;
-  env.render_to(os, env.parse(input), data);
+template <typename RenderT = Renderer, typename MetaT = json_metamodel>
+inline void render_to(std::ostream& os, std::string_view input, const typename MetaT::model_type& model) {
+  Environment<RenderT, MetaT> env;
+  env.render_to(os, env.parse(input), model);
 }
 
 } // namespace inja

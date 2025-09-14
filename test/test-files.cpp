@@ -26,7 +26,7 @@ TEST_CASE("loading") {
 
     std::string file_error_message = "[inja.exception.file_error] failed accessing file at '" + path + "'";
     CHECK_THROWS_WITH(env.load_file(path), file_error_message.c_str());
-    CHECK_THROWS_WITH(env.load_json(path), file_error_message.c_str());
+    CHECK_THROWS_WITH(env.load_model(path), file_error_message.c_str());
   }
 }
 
@@ -35,13 +35,13 @@ TEST_CASE("complete-files") {
 
   for (std::string test_name : {"simple-file", "nested", "nested-line", "html", "html-extend"}) {
     SUBCASE(test_name.c_str()) {
-      CHECK(env.render_file_with_json_file(test_name + "/template.txt", test_name + "/data.json") == env.load_file(test_name + "/result.txt"));
+      CHECK(env.render_file_with_model(test_name + "/template.txt", test_name + "/data.json") == env.load_file(test_name + "/result.txt"));
     }
   }
 
   for (std::string test_name : {"error-unknown"}) {
     SUBCASE(test_name.c_str()) {
-      CHECK_THROWS_WITH(env.render_file_with_json_file(test_name + "/template.txt", test_name + "/data.json"),
+      CHECK_THROWS_WITH(env.render_file_with_model(test_name + "/template.txt", test_name + "/data.json"),
                         "[inja.exception.parser_error] (at 2:10) expected 'in', got 'ins'");
     }
   }
@@ -54,7 +54,7 @@ TEST_CASE("complete-files-whitespace-control") {
 
   for (std::string test_name : {"nested-whitespace"}) {
     SUBCASE(test_name.c_str()) {
-      CHECK(env.render_file_with_json_file(test_name + "/template.txt", test_name + "/data.json") == env.load_file(test_name + "/result.txt"));
+      CHECK(env.render_file_with_model(test_name + "/template.txt", test_name + "/data.json") == env.load_file(test_name + "/result.txt"));
     }
   }
 }
@@ -82,12 +82,12 @@ TEST_CASE("include-files") {
     CHECK(env.render_file("include.txt", data) == "Answer: Hello Jeff.");
     CHECK(env.render("Answer: {% include \"simple.txt\" %}", data) == "Answer: Hello Jeff.");
 
-    CHECK_NOTHROW(env.render_file_with_json_file("html/template.txt", "html/data.json"));
+    CHECK_NOTHROW(env.render_file_with_model("html/template.txt", "html/data.json"));
   }
 
   SUBCASE("without local files") {
     env.set_search_included_templates_in_files(false);
-    CHECK_THROWS_WITH(env.render_file_with_json_file("html/template.txt", "html/data.json"),
+    CHECK_THROWS_WITH(env.render_file_with_model("html/template.txt", "html/data.json"),
                     "[inja.exception.render_error] (at 3:14) include 'header.txt' not found");
   }
 }
