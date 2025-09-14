@@ -2828,7 +2828,7 @@ namespace inja {
 /*!
  * \brief Class for changing the configuration.
  */
-template <typename RenderT = Renderer, typename ModelT = json_metamodel>
+template <typename RenderT = Renderer, typename MetaT = json_metamodel>
  class Environment {
   FunctionStorage function_storage;
   TemplateStorage template_storage;
@@ -2842,7 +2842,7 @@ protected:
   const std::filesystem::path output_path;
 
 public:
-  using model_type = typename ModelT::model_type;
+  using model_type = typename MetaT::model_type;
 
   Environment(): Environment("") {}
   explicit Environment(const std::filesystem::path& global_path): input_path(global_path), output_path(global_path) {}
@@ -2978,8 +2978,8 @@ public:
     return Parser::load_file(input_path / filename);
   }
 
-  typename ModelT::model_type load_model(const std::string& filename) {
-    return ModelT::load(input_path / filename);
+  typename MetaT::model_type load_model(const std::string& filename) {
+    return MetaT::load(input_path / filename);
   }
 
   /*!
@@ -3032,17 +3032,17 @@ public:
 /*!
 @brief render with default settings to a string
 */
-template <typename RenderT = Renderer, typename ModelT = json_metamodel>
-inline std::string render(std::string_view input, const typename ModelT::model_type& model) {
-  return Environment<RenderT, ModelT>().render(input, model);
+template <typename RenderT = Renderer, typename MetaT = json_metamodel>
+inline std::string render(std::string_view input, const typename MetaT::model_type& model) {
+  return Environment<RenderT, MetaT>().render(input, model);
 }
 
 /*!
 @brief render with default settings to the given output stream
 */
-template <typename RenderT = Renderer, typename ModelT = json_metamodel>
-inline void render_to(std::ostream& os, std::string_view input, const typename ModelT::model_type& model) {
-  Environment<RenderT, ModelT> env;
+template <typename RenderT = Renderer, typename MetaT = json_metamodel>
+inline void render_to(std::ostream& os, std::string_view input, const typename MetaT::model_type& model) {
+  Environment<RenderT, MetaT> env;
   env.render_to(os, env.parse(input), model);
 }
 

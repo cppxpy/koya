@@ -14,8 +14,6 @@ class json_metamodel {
 public:
   using model_type = json;
 
-  // FIXME try passing std::error_code
-  // then throw under the caller
   static model_type load(const std::filesystem::path& filename) {
     std::ifstream file;
     file.open(filename);
